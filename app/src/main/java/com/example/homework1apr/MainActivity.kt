@@ -85,7 +85,7 @@ class MainActivity : AppCompatActivity() {
 class NotesAdapter(private val items: MutableList<Note>) :
     RecyclerView.Adapter<NotesAdapter.VH>() {
 
-    inner class VH(val v: View) : RecyclerView.ViewHolder(v)
+    class VH(val v: View) : RecyclerView.ViewHolder(v)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val v = LayoutInflater.from(parent.context)

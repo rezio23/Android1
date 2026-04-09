@@ -12,6 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Homework1Apr">
 
+        <!-- Login is the main entry point -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -23,11 +24,11 @@
 
         <activity
             android:name=".RegisterActivity"
-            android:exported="false" />
+            android:exported="true" />
 
         <activity
             android:name=".MainActivity"
-            android:exported="false" />
+            android:exported="true" />
 
     </application>
 

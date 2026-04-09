@@ -1,12 +1,13 @@
 package com.example.homework1apr
 
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 
 class FirebaseRepository {
     private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
+    // Using the Realtime Database reference
+    private val db = FirebaseDatabase.getInstance().getReference("notes")
 
     fun signOut() {
         auth.signOut()
@@ -33,12 +34,13 @@ class FirebaseRepository {
     suspend fun addNote(text: String): Result<Unit> {
         val userId = auth.currentUser?.uid ?: return Result.failure(Exception("User not logged in"))
         return try {
-            val note = hashMapOf(
+            val key = db.push().key ?: return Result.failure(Exception("Could not generate key"))
+            val noteData = hashMapOf(
                 "userId" to userId,
                 "text" to text,
                 "timestamp" to System.currentTimeMillis()
             )
-            db.collection("notes").add(note).await()
+            db.child(key).setValue(noteData).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -48,13 +50,11 @@ class FirebaseRepository {
     suspend fun getNotes(): Result<List<Note>> {
         val userId = auth.currentUser?.uid ?: return Result.failure(Exception("User not logged in"))
         return try {
-            val snapshot = db.collection("notes")
-                .whereEqualTo("userId", userId)
-                .get()
-                .await()
-            val notes = snapshot.documents.mapNotNull { doc ->
-                val note = doc.toObject(Note::class.java)
-                note?.id = doc.id
+            // Fetch notes belonging to the current user
+            val snapshot = db.orderByChild("userId").equalTo(userId).get().await()
+            val notes = snapshot.children.mapNotNull { child ->
+                val note = child.getValue(Note::class.java)
+                note?.id = child.key ?: ""
                 note
             }
             Result.success(notes)
@@ -65,7 +65,7 @@ class FirebaseRepository {
 
     suspend fun deleteNote(id: String): Result<Unit> {
         return try {
-            db.collection("notes").document(id).delete().await()
+            db.child(id).removeValue().await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
